@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    // 是否输出 .d.ts 文件
+    "declaration": true,
+    // 输出 .d.ts 文件到哪个目录
+    "declarationDir": "./dist",
+    // 输出 ts 编译结果到哪个目录
+    "outDir": "./dist"
+  },
+  // 包含哪些 ts 目录
+  "include": [
+    "src/**/*"
+  ]
+}

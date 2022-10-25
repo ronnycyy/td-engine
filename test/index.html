@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fabric</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- <h1>Fabric.js</h1> -->
+  <canvas id="main" width="500" height="500"></canvas>
+  <script src="./fabric.js"></script>
+  <script>
+    var canvas = new fabric.Canvas('main');
+    var rect = new fabric.Rect({
+      left: 0,
+      top: 0,
+      width: 500,
+      height: 500,
+      fill: 'pink'
+    })
+    canvas.add(rect);
+    canvas.on('mouse:down', (payload) => {
+      console.log(payload);
+    })
+  </script>
+</body>
+
+</html>
