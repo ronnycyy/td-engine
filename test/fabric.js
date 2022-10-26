@@ -8623,35 +8623,40 @@ fabric$1.Gradient = Gradient;
                 //  transform pointer to target's containing coordinate plane
                 pointer = fabric.util.transformPoint(pointer, fabric.util.invertTransform(target.group.calcTransformMatrix()));
             }
-            var corner = target.__corner, control = target.controls[corner], actionHandler = (alreadySelected && corner) ?
-                control.getActionHandler(e, target, control) : fabric.controlsUtils.dragHandler, action = this._getActionFromCorner(alreadySelected, corner, e, target), origin = this._getOriginFromCorner(target, corner), altKey = e[this.centeredKey],
-                /**
-                 * relative to target's containing coordinate plane
-                 * both agree on every point
-                 **/
-                transform = {
-                    target: target,
-                    action: action,
-                    actionHandler: actionHandler,
-                    corner: corner,
-                    scaleX: target.scaleX,
-                    scaleY: target.scaleY,
-                    skewX: target.skewX,
-                    skewY: target.skewY,
-                    offsetX: pointer.x - target.left,
-                    offsetY: pointer.y - target.top,
-                    originX: origin.x,
-                    originY: origin.y,
-                    ex: pointer.x,
-                    ey: pointer.y,
-                    lastX: pointer.x,
-                    lastY: pointer.y,
-                    theta: degreesToRadians(target.angle),
-                    width: target.width * target.scaleX,
-                    shiftKey: e.shiftKey,
-                    altKey: altKey,
-                    original: fabric.util.saveObjectTransform(target),
-                };
+            var corner = target.__corner;
+            var control = target.controls[corner];
+            var actionHandler = (alreadySelected && corner) ?
+                control.getActionHandler(e, target, control) : fabric.controlsUtils.dragHandler;
+            var action = this._getActionFromCorner(alreadySelected, corner, e, target);
+            var origin = this._getOriginFromCorner(target, corner);
+            var altKey = e[this.centeredKey];
+            /**
+             * relative to target's containing coordinate plane
+             * both agree on every point
+             **/
+            var transform = {
+                target: target,
+                action: action,
+                actionHandler: actionHandler,
+                corner: corner,
+                scaleX: target.scaleX,
+                scaleY: target.scaleY,
+                skewX: target.skewX,
+                skewY: target.skewY,
+                offsetX: pointer.x - target.left,
+                offsetY: pointer.y - target.top,
+                originX: origin.x,
+                originY: origin.y,
+                ex: pointer.x,
+                ey: pointer.y,
+                lastX: pointer.x,
+                lastY: pointer.y,
+                theta: degreesToRadians(target.angle),
+                width: target.width * target.scaleX,
+                shiftKey: e.shiftKey,
+                altKey: altKey,
+                original: fabric.util.saveObjectTransform(target),
+            };
             if (this._shouldCenterTransform(target, action, altKey)) {
                 transform.originX = 'center';
                 transform.originY = 'center';

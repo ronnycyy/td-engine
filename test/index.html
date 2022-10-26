@@ -20,16 +20,22 @@
   <script>
     var canvas = new fabric.Canvas('main');
     var rect = new fabric.Rect({
-      left: 0,
-      top: 0,
-      width: 500,
-      height: 500,
+      left: 10,
+      top: 10,
+      width: 200,
+      height: 200,
       fill: 'pink'
     })
     canvas.add(rect);
-    canvas.on('mouse:down', (payload) => {
-      console.log(payload);
-    })
+    // canvas.on('mouse:down', (event) => {
+    //   console.log(event);
+    // })
+    // canvas.on('object:moving', function (event) {
+    //   console.log('moving an object', event);
+    // });
+    canvas.on('object:scaling', function (event) {
+      console.log('scaling:', event);
+    });
   </script>
 </body>
 

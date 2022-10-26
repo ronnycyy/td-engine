@@ -1,6 +1,6 @@
 import { Canvas } from "../canvas";
 import { TOriginX, TOriginY } from "../default";
-import { IoCoords } from "../point";
+import { IoCoords, TCorner } from "../point";
 
 export class TD_Object {
   public left: number;
@@ -19,6 +19,8 @@ export class TD_Object {
   public canvas: Canvas;
   public oCoords: IoCoords;
   public touchCornerSize: number;
+  public corner: TCorner;  // 当前拖拽的控制点位置
+  public hiddenFill: string;  // 隐藏层的颜色
 
   constructor() {
     this.cornerSize = 13;
@@ -31,11 +33,17 @@ export class TD_Object {
     this.originX = 'left';
     this.originY = 'top';
     this.touchCornerSize = 24;
+    this.corner = null;
+    this.hiddenFill = '';
+  }
+
+  public setHiddenFill(hiddenFill: string) {
+    this.hiddenFill = hiddenFill;
   }
 
   public render(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D, hiddenFill: string) { }
 
-  public drawControls(ctx: CanvasRenderingContext2D) { }
+  public drawControls(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) { }
 
   public getTotalAngle() {
     return this.angle;
@@ -43,6 +51,18 @@ export class TD_Object {
 
   public setCanvas(canvas: Canvas) {
     this.canvas = canvas;
+  }
+
+  public set(key: string, value: any) {
+    this[key] = value;
+  }
+
+  public get(key: string) {
+    return this[key];
+  }
+
+  public fire(eventName: string, options: any) {
+    // object 上的事件注册与发布
   }
 }
 

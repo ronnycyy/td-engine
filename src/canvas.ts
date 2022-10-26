@@ -1,5 +1,7 @@
+import { Transform } from './transform';
 import { addListener } from "./default";
 import { TD_Object } from "./objects/object";
+import { ICorner, Point, TCorner } from "./point";
 import Utils from "./utils";
 
 export interface ICanvasOptions {
@@ -22,8 +24,9 @@ export class Canvas {
   private _utils: Utils;
   private _target: TD_Object;
   private _eventListeners: { [key: string]: Array<Function> };
-  private _offsetTop: number;
-  private _offsetLeft: number;
+  private _offsetTop: number;   // canvas 离顶部的距离
+  private _offsetLeft: number;  // canvas 离左边的距离
+  private _currentTransform: Transform;
 
   // private: 只能给本类定义访问，子类不能访问，本类实例也无法访问。
   // protected: 只能在本类和子类中访问，本类实例也不能访问
@@ -52,6 +55,7 @@ export class Canvas {
   public renderCanvas(ctx: CanvasRenderingContext2D) {
     // 清空画布
     this._clearContext(this.lowerContext);
+    this._clearContext(this.upperContext);
     // 存储状态
     ctx.save();
     // 重新绘制所有图形
@@ -112,6 +116,7 @@ export class Canvas {
       randomColor = this._utils.getRandomHexColor();
     }
     this._graph.set(randomColor, object);
+    object.setHiddenFill(randomColor);
   }
 
   private _initStatic(el: string, options?: ICanvasOptions) {
@@ -128,17 +133,97 @@ export class Canvas {
 
   private _initEventListeners() {
     addListener(this.lowerCanvasEl, 'mousedown', this._onMouseDown.bind(this), false);
+    addListener(this.lowerCanvasEl, 'mousemove', this._onMouseMove.bind(this), false);
+    addListener(this.lowerCanvasEl, 'mouseup', this._onMouseUp.bind(this), false);
   }
 
   private _onMouseDown(e: MouseEvent) {
     this._getTarget(e);
+    this._setTargetCorner(e);
+    this._setupCurrentTransform(e, this._target, false);
     this._handleEvent(e, 'down');
     this.requestRenderAll();
   }
 
+  private _onMouseUp() {
+    this._resetCurrentTransform();
+  }
+
+  private _onMouseMove(e: MouseEvent) {
+    if (!this._currentTransform || !this._target) {
+      return;
+    }
+    this._transformObject(e);
+  }
+
+  private _transformObject(e: MouseEvent) {
+    // 获取点击位置
+    const pointer = this._getPointer(e);
+    // 设置 target 对象的平移/缩放 
+    this._performTransformAction(e, this._currentTransform, pointer);
+    // 擦除画布重新绘制
+    this.requestRenderAll();
+  }
+
+  private _setTargetCorner(e: MouseEvent) {
+    if (!this._target) {
+      return;
+    }
+    // 检查鼠标的位置，是否在`选中图形`的某个边角控制点范围内
+    const p = this._getPointer(e);
+    const oCoords = this._target.oCoords;
+
+    // 寻找控制点
+    for (const key in oCoords) {
+      const c = oCoords[key].corner as ICorner;
+      const bl = c.bl;
+      const br = c.br;
+      const tl = c.tl;
+      const tr = c.tr;
+      // canvas坐标系
+      // x从左往右指，y从上往下指
+      if (p.x >= bl.x && p.x <= br.x && p.y >= tl.y && p.y <= bl.y) {
+        this._target.corner = key as TCorner;
+        return;
+      }
+    }
+
+    this._target.corner = null;
+  }
+
+  private _resetCurrentTransform() {
+    this._currentTransform = null;
+  }
+
+  private _performTransformAction(e: MouseEvent, transform: Transform, pointer: Point) {
+    if (!transform || !pointer) {
+      return;
+    }
+    if (transform.action) {
+      // 缩放
+      this._utils.scaleHandler(e, transform, pointer, this._offsetLeft, this._offsetTop);
+    } else {
+      // 平移
+      this._utils.translateHandler(e, transform, pointer);
+    }
+  }
+
+  private _getPointer(e: MouseEvent) {
+    return new Point(e.clientX, e.clientY);
+  }
+
+  private _setupCurrentTransform(e: MouseEvent, target: TD_Object, alreadySelected: boolean) {
+    if (!target) {
+      return;
+    }
+    const point = this._getPointer(e);
+    const transform = new Transform(target, point);
+    this._currentTransform = transform;
+  }
+
   private _drawTargetControls() {
     if (this._target) {
-      this._target.drawControls(this.lowerContext);
+      this._target.drawControls(this.lowerContext, this.upperContext);
     }
   }
 

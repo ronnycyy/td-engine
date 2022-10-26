@@ -29,12 +29,17 @@ export class Rect extends TD_Object {
     this.top = options.top || 0;
   }
 
-  public render(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D, hiddenFill: string) {
+  public render(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) {
     this._renderVisible(ctx);
-    this._renderHidden(hiddenCtx, hiddenFill);
+    this._renderHidden(hiddenCtx, this.hiddenFill);
   }
 
-  public drawControls(ctx: CanvasRenderingContext2D) {
+  public drawControls(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) {
+    this._drawControlsVisible(ctx);
+    this._drawControlsHidden(hiddenCtx);
+  }
+
+  private _drawControlsVisible(ctx: CanvasRenderingContext2D) {
     ctx.save();
     var retinaScaling = 0;
     var p: Point;
@@ -50,6 +55,23 @@ export class Rect extends TD_Object {
     this.forEachControl(function (control: Control, key: keyof IoCoords, fabricObject: TD_Object) {
       p = fabricObject.oCoords[key];
       control.render(ctx, p.x, p.y, fabricObject);
+    });
+    ctx.restore();
+    return this;
+  }
+
+  private _drawControlsHidden(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    var retinaScaling = 0;
+    var p: Point;
+    ctx.setTransform(retinaScaling, 0, 0, retinaScaling, 0, 0);
+    ctx.strokeStyle = ctx.fillStyle = this.cornerColor;
+    if (!this.transparentCorners) {
+      ctx.strokeStyle = this.cornerStrokeColor;
+    }
+    this.forEachControl(function (control: Control, key: keyof IoCoords, target: TD_Object) {
+      p = target.oCoords[key];
+      control.renderHidden(ctx, p.x, p.y, target, target.hiddenFill);
     });
     ctx.restore();
     return this;

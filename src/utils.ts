@@ -1,43 +1,97 @@
-  const iMatrix = Object.freeze([1, 0, 0, 1, 0, 0]);
-  const halfPI = Math.PI / 2;
-  const PiBy180 = Math.PI / 180;
-  const degreesToRadians = (degrees: number) => (degrees * PiBy180);
-
-  const cos = (angle: number) => {
-    if (angle === 0) {
-      return 1;
-    }
-    const angleSlice = Math.abs(angle) / halfPI;
-    switch (angleSlice) {
-      case 1:
-      case 3: return 0;
-      case 2: return -1;
-    }
-    return Math.cos(angle);
-  };
-
-  const sin = (angle: number) => {
-    if (angle === 0) {
-      return 0;
-    }
-    const angleSlice = angle / halfPI;
-    const value = Math.sign(angle);
-    switch (angleSlice) {
-      case 1: return value;
-      case 2: return 0;
-      case 3: return -value;
-    }
-    return Math.sin(angle);
-  };
-
-  function addListener(el: HTMLElement, eventName: keyof HTMLElementEventMap, handler: EventListener, useCapture: boolean) {
-    if (el) {
-      el.addEventListener(eventName, handler, useCapture);
-    }
-  }
+import { Transform } from './transform';
+import { iMatrix, degreesToRadians, cos, sin } from './default';
+import { Point } from './point';
 
 class Utils {
   constructor() { }
+
+  // 缩放
+  // offsetLeft: canvas 到 html 左边界的距离
+  public scaleHandler(eventData: Event, transform: Transform, point: Point, offsetLeft: number, offsetTop: number) {
+    const target = transform.target;
+    const px = point.x - offsetLeft;  // 点到 canvas 左边界的距离
+    const py = point.y - offsetTop;   // 点到 canvas 顶边界的距离
+
+    const oldLeft = target.left;
+    const oldTop = target.top;
+
+    switch (transform.action) {
+      case 'bl': {
+        target.left = px;
+        target.top = target.top;
+        target.width = Math.abs(oldLeft + target.width - px);
+        target.height = Math.abs(py - oldTop);
+        break;
+      }
+      case 'mb': {
+        target.left = target.left;
+        target.top = target.top;
+        target.width = target.width;
+        target.height = Math.abs(py - oldTop);
+        break;
+      }
+      case 'br': {
+        target.left = target.left;
+        target.top = target.top;
+        target.width = Math.abs(px - target.left);
+        target.height = Math.abs(py - target.top);
+        break;
+      }
+      case 'ml': {
+        target.left = px;
+        target.top = target.top;
+        target.width = Math.abs(oldLeft + target.width - px);
+        target.height = target.height;
+        break;
+      }
+      case 'mr': {
+        target.left = target.left;
+        target.top = target.top;
+        target.width = Math.abs(px - target.left);
+        target.height = target.height;
+        break;
+      }
+      case 'tl': {
+        target.left = px;
+        target.top = py;
+        target.width = Math.abs(oldLeft + target.width - px);
+        target.height = Math.abs(oldTop + target.height - py);
+        break;
+      }
+      case 'mt': {
+        target.left = target.left;
+        target.top = py;
+        target.width = target.width;
+        target.height = Math.abs(oldTop + target.height - py);
+        break;
+      }
+      case 'tr': {
+        target.left = target.left;
+        target.top = py;
+        target.width = Math.abs(px - target.left);
+        target.height = Math.abs(oldTop + target.height - py);
+        break;
+      }
+    }
+  }
+
+  // 平移
+  public translateHandler(eventData: Event, transform: Transform, point: Point): boolean {
+    const target = transform.target;
+    const newLeft = point.x - (transform.offsetX || 0);
+    const newTop = point.y - (transform.offsetY || 0);
+    const isExactlyMoveX = !target.get('lockMovementX') && target.left !== newLeft;
+    const isExactlyMoveY = !target.get('lockMovementY') && target.top !== newTop;
+
+    isExactlyMoveX && target.set('left', newLeft);
+    isExactlyMoveY && target.set('top', newTop);
+
+    if (isExactlyMoveX || isExactlyMoveY) {
+      // 这里可以加 target 上的 move 事件发布
+    }
+
+    return isExactlyMoveX || isExactlyMoveY;   // 图形是否移动了
+  }
 
   public requestAnimFrame(cb: Function) {
     window.requestAnimationFrame(() => cb.call(null));

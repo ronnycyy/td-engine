@@ -1,3 +1,5 @@
+export type TCorner = 'bl' | 'mb' | 'br' | 'ml' | 'mr' | 'tl' | 'mt' | 'tr' | 'mtr' | null;
+
 export interface ICoordinate {
   x: number;
   y: number;

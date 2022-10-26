@@ -90,8 +90,12 @@ export class Control {
     };
   }
 
-  public render(ctx: CanvasRenderingContext2D, left: number, top: number, fabricObject: TD_Object) {
-    this._renderSquareControl(ctx, left, top, fabricObject);
+  public render(ctx: CanvasRenderingContext2D, left: number, top: number, target: TD_Object) {
+    this._renderSquareControl(ctx, left, top, target);
+  }
+
+  public renderHidden(ctx: CanvasRenderingContext2D, left: number, top: number, target: TD_Object, hiddenFill: string) {
+    this._renderSquareControl(ctx, left, top, target, hiddenFill);
   }
 
   public positionHandler(dim: Point, finalMatrix: Array<number>, fabricObject?: TD_Object) {
@@ -100,7 +104,7 @@ export class Control {
     return point;
   }
 
-  private _renderSquareControl(ctx: CanvasRenderingContext2D, left: number, top: number, fabricObject: TD_Object) {
+  private _renderSquareControl(ctx: CanvasRenderingContext2D, left: number, top: number, fabricObject: TD_Object, hiddenFill?: string) {
     var xSize = fabricObject.cornerSize;
     var ySize = fabricObject.cornerSize;
     var transparentCorners = fabricObject.transparentCorners;
@@ -110,15 +114,30 @@ export class Control {
     var ySizeBy2 = ySize / 2;
 
     requestAnimationFrame(() => {
-      ctx.save();
-      ctx.fillStyle = fabricObject.cornerColor;
-      ctx.strokeStyle = fabricObject.cornerStrokeColor || ctx.fillStyle;
-      ctx.lineWidth = 1;
-      ctx.translate(left, top);
-      var angle = fabricObject.getTotalAngle();
-      ctx.rotate(degreesToRadians(angle));
-      ctx.strokeRect(-xSizeBy2, -ySizeBy2, xSize, ySize);
-      ctx.restore();
+
+      if (hiddenFill) {
+        ctx.save();
+        ctx.fillStyle = hiddenFill;
+        ctx.strokeStyle = hiddenFill;
+        ctx.lineWidth = 1;
+        ctx.translate(left, top);
+        var angle = fabricObject.getTotalAngle();
+        ctx.rotate(degreesToRadians(angle));
+        ctx.fillRect(-xSizeBy2, -ySizeBy2, xSize, ySize);
+        ctx.restore();
+      }
+      else {
+        ctx.save();
+        ctx.fillStyle = fabricObject.cornerColor;
+        ctx.strokeStyle = fabricObject.cornerStrokeColor || ctx.fillStyle;
+        ctx.lineWidth = 1;
+        ctx.translate(left, top);
+        var angle = fabricObject.getTotalAngle();
+        ctx.rotate(degreesToRadians(angle));
+        ctx.strokeRect(-xSizeBy2, -ySizeBy2, xSize, ySize);
+        ctx.restore();
+      }
+
     })
   }
 }
