@@ -5,9 +5,14 @@ import { Point } from './point';
 class Utils {
   constructor() { }
 
+  // 旋转
+  // event 后面可以交给事件系统, 如 target.fire("rotate", xxx)
+  public rotateHandler(e: Event, transform: Transform, point: Point) {
+  }
+
   // 缩放
   // offsetLeft: canvas 到 html 左边界的距离
-  public scaleHandler(eventData: Event, transform: Transform, point: Point, offsetLeft: number, offsetTop: number) {
+  public scaleHandler(e: Event, transform: Transform, point: Point, offsetLeft: number, offsetTop: number) {
     const target = transform.target;
     const px = point.x - offsetLeft;  // 点到 canvas 左边界的距离
     const py = point.y - offsetTop;   // 点到 canvas 顶边界的距离
@@ -73,10 +78,11 @@ class Utils {
         break;
       }
     }
+    target.updateControls();
   }
 
   // 平移
-  public translateHandler(eventData: Event, transform: Transform, point: Point): boolean {
+  public translateHandler(e: Event, transform: Transform, point: Point): boolean {
     const target = transform.target;
     const newLeft = point.x - (transform.offsetX || 0);
     const newTop = point.y - (transform.offsetY || 0);
@@ -85,6 +91,8 @@ class Utils {
 
     isExactlyMoveX && target.set('left', newLeft);
     isExactlyMoveY && target.set('top', newTop);
+
+    target.updateControls();
 
     if (isExactlyMoveX || isExactlyMoveY) {
       // 这里可以加 target 上的 move 事件发布

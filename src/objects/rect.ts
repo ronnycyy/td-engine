@@ -1,8 +1,7 @@
 import { Controls, Control } from "../control";
 import { iMatrix } from "../default";
 import { IObjectOptions, TD_Object } from "./object";
-import { Point, IoCoords } from "../point";
-import Utils from "../utils";
+import { Point } from "../point";
 
 export interface IRectOptions extends IObjectOptions {
 }
@@ -14,8 +13,6 @@ export class Rect extends TD_Object {
   public fillRule: 'nonzero' | 'evenodd';
   public controls: Controls;
 
-  private _utils: Utils;
-
   constructor(options: IRectOptions) {
     super();
     this.type = 'rect';
@@ -23,10 +20,11 @@ export class Rect extends TD_Object {
     this.width = options.width;
     this.height = options.height;
     this.fillRule = options.fillRule || 'evenodd';
-    this._utils = new Utils();
     this.controls = new Controls();
     this.left = options.left || 0;
     this.top = options.top || 0;
+    this._setCenterPoint();
+    this._setControls();
   }
 
   public render(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) {
@@ -39,86 +37,73 @@ export class Rect extends TD_Object {
     this._drawControlsHidden(hiddenCtx);
   }
 
+  private _setCenterPoint() {
+    const cx = this.left + this.width / 2;
+    const cy = this.top + this.height / 2;
+    this.centerPoint = new Point(cx, cy);
+  }
+
   private _drawControlsVisible(ctx: CanvasRenderingContext2D) {
     ctx.save();
-    var retinaScaling = 0;
-    var p: Point;
-    ctx.setTransform(retinaScaling, 0, 0, retinaScaling, 0, 0);
     ctx.strokeStyle = ctx.fillStyle = this.cornerColor;
     if (!this.transparentCorners) {
       ctx.strokeStyle = this.cornerStrokeColor;
     }
-    this._setLineDash(ctx, this.cornerDashArray);
-    // 获取控制点, 比如 rect 有 9 个: tl,mt,rt, ml,mr, bl,mb,br, mtr
-    this.setCoords();
-    // 遍历 this.controls, 调用每个 control 对象的 render 方法，使用 oCoords 的 (x,y) 来绘制控制点
-    this.forEachControl(function (control: Control, key: keyof IoCoords, fabricObject: TD_Object) {
-      p = fabricObject.oCoords[key];
-      control.render(ctx, p.x, p.y, fabricObject);
-    });
+    // 每个控制点渲染自己
+    for (const key in this.controls) {
+      const c = this.controls[key] as Control;
+      c.render(ctx, this);
+    }
     ctx.restore();
     return this;
   }
 
   private _drawControlsHidden(ctx: CanvasRenderingContext2D) {
     ctx.save();
-    var retinaScaling = 0;
-    var p: Point;
-    ctx.setTransform(retinaScaling, 0, 0, retinaScaling, 0, 0);
     ctx.strokeStyle = ctx.fillStyle = this.cornerColor;
     if (!this.transparentCorners) {
       ctx.strokeStyle = this.cornerStrokeColor;
     }
-    this.forEachControl(function (control: Control, key: keyof IoCoords, target: TD_Object) {
-      p = target.oCoords[key];
-      control.renderHidden(ctx, p.x, p.y, target, target.hiddenFill);
-    });
+    for (const key in this.controls) {
+      const c = this.controls[key] as Control;
+      c.renderHidden(ctx, this, this.hiddenFill);
+    }
     ctx.restore();
     return this;
   }
 
-  public setCoords() {
-    // 计算所有控制点坐标 bl,br,mb,ml,mr,mt,mtr,tl,tr
-    this.oCoords = this.calcOCoords();
-    // 填充 this.controls 
-    // 每个控制点，都有自己四个角的点: tl,tr,bl,br，这一步填充上
-    this._setCornerCoords();
+  public updateControls() {
+    this.controls = this.generateControls();
+  }
+
+  // 计算所有控制点坐标 bl,br,mb,ml,mr,mt,tl,tr
+  private _setControls() {
+    this.controls = this.generateControls();
     return this;
   }
 
-  private _setCornerCoords() {
-    var coords = this.oCoords;
-    for (var control in coords) {
-      var controlObject = this.controls[control] as Control;
-      coords[control].corner = controlObject.calcCornerCoords(this.angle, this.cornerSize, coords[control].x, coords[control].y, false);
-      coords[control].touchCorner = controlObject.calcCornerCoords(this.angle, this.touchCornerSize, coords[control].x, coords[control].y, true);
-    }
-  }
+  public generateControls(): Controls {
+    const l = this.left;
+    const t = this.top;
+    const w = this.width;
+    const h = this.height;
 
-  public calcOCoords() {
-    var vpt = this.getViewportTransform();
-    var center = this.getCenterPoint();
-    var tMatrix = [1, 0, 0, 1, center.x, center.y];
-    var rMatrix = this._utils.calcRotateMatrix({ angle: this.getTotalAngle() }) as Array<number>;
-    var positionMatrix = this._utils.multiplyMatrices(tMatrix, rMatrix);
-    var startMatrix = this._utils.multiplyMatrices(vpt, positionMatrix);
-    var finalMatrix = this._utils.multiplyMatrices(startMatrix, [1 / vpt[0], 0, 0, 1 / vpt[3], 0, 0]);
-    var dim = this._calculateCurrentDimensions();
-    var coords = {} as IoCoords;
-    this.forEachControl(function (control: Control, key: keyof IoCoords, fabricObject: TD_Object) {
-      coords[key] = control.positionHandler(dim, finalMatrix, fabricObject);
-    });
-    return coords;
+    return {
+      tl: new Control(l, t),
+      mt: new Control(l + w / 2, t),
+      tr: new Control(l + w, t),
+      ml: new Control(l, t + h / 2),
+      mr: new Control(l + w, t + h / 2),
+      bl: new Control(l, t + h),
+      mb: new Control(l + w / 2, t + h),
+      br: new Control(l + w, t + h)
+    };
   }
 
   public forEachControl(fn: Function) {
     for (var i in this.controls) {
       fn(this.controls[i], i, this);
     }
-  }
-
-  private _calculateCurrentDimensions() {
-    return new Point(this.width, this.height);
   }
 
   public getCenterPoint() {
@@ -132,18 +117,6 @@ export class Rect extends TD_Object {
       return this.canvas.viewportTransform;
     }
     return iMatrix.concat();
-  }
-
-  private _setLineDash(ctx: CanvasRenderingContext2D, dashArray: Array<number>) {
-    if (!dashArray || dashArray.length === 0) {
-      return;
-    }
-    if (1 & dashArray.length) {
-      dashArray.push.apply(dashArray, dashArray);
-    }
-    // 画直线的时候，定义这条直线为虚线，然后按照 dashArray 的`实部分`和`虚部分`来画。
-    // 比如 [5, 10, 15, 30], 表示 `实5虚10实15虚30` 按此规则分割直线。
-    ctx.setLineDash(dashArray);
   }
 
   private _renderVisible(ctx: CanvasRenderingContext2D) {

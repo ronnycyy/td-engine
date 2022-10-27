@@ -16,12 +16,13 @@
 <body>
   <!-- <h1>Fabric.js</h1> -->
   <canvas id="main" width="500" height="500"></canvas>
+
   <script src="./fabric.js"></script>
   <script>
     var canvas = new fabric.Canvas('main');
     var rect = new fabric.Rect({
-      left: 10,
-      top: 10,
+      left: 100,
+      top: 100,
       width: 200,
       height: 200,
       fill: 'pink'
@@ -33,9 +34,12 @@
     // canvas.on('object:moving', function (event) {
     //   console.log('moving an object', event);
     // });
-    canvas.on('object:scaling', function (event) {
-      console.log('scaling:', event);
-    });
+    // canvas.on('object:scaling', function (event) {
+    //   console.log('scaling:', event);
+    // });
+    canvas.on('object:rotating', function (e) {
+      console.log('object:rotating', e);
+    })
   </script>
 </body>
 

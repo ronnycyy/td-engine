@@ -26571,7 +26571,10 @@ function renderSquareControl(ctx, left, top, styleOverride, fabricObject) {
      */
     function wrapWithFixedAnchor(actionHandler) {
         return function (eventData, transform, x, y) {
-            var target = transform.target, centerPoint = target.getRelativeCenterPoint(), constraint = target.translateToOriginPoint(centerPoint, transform.originX, transform.originY), actionPerformed = actionHandler(eventData, transform, x, y);
+            var target = transform.target;
+            var centerPoint = target.getRelativeCenterPoint();
+            var constraint = target.translateToOriginPoint(centerPoint, transform.originX, transform.originY); 
+            var actionPerformed = actionHandler(eventData, transform, x, y);
             target.setPositionByOrigin(constraint, transform.originX, transform.originY);
             return actionPerformed;
         };
@@ -26820,13 +26823,23 @@ function renderSquareControl(ctx, left, top, styleOverride, fabricObject) {
      * @private
      */
     function rotationWithSnapping(eventData, transform, x, y) {
-        var t = transform, target = t.target, pivotPoint = target.translateToOriginPoint(target.getRelativeCenterPoint(), t.originX, t.originY);
+        var t = transform;
+        var target = t.target;
+        var pivotPoint = target.translateToOriginPoint(target.getRelativeCenterPoint(), t.originX, t.originY);
         if (target.lockRotation) {
             return false;
         }
-        var lastAngle = Math.atan2(t.ey - pivotPoint.y, t.ex - pivotPoint.x), curAngle = Math.atan2(y - pivotPoint.y, x - pivotPoint.x), angle = radiansToDegrees(curAngle - lastAngle + t.theta), hasRotated = true;
+        // t.ey 和 t.ex 是啥？
+        var lastAngle = Math.atan2(t.ey - pivotPoint.y, t.ex - pivotPoint.x);
+        // x,y 是鼠标的 x,y
+        var curAngle = Math.atan2(y - pivotPoint.y, x - pivotPoint.x);
+        var angle = radiansToDegrees(curAngle - lastAngle + t.theta);
+        var hasRotated = true;
         if (target.snapAngle > 0) {
-            var snapAngle = target.snapAngle, snapThreshold = target.snapThreshold || snapAngle, rightAngleLocked = Math.ceil(angle / snapAngle) * snapAngle, leftAngleLocked = Math.floor(angle / snapAngle) * snapAngle;
+            var snapAngle = target.snapAngle;
+            var snapThreshold = target.snapThreshold || snapAngle;
+            var rightAngleLocked = Math.ceil(angle / snapAngle) * snapAngle;
+            var leftAngleLocked = Math.floor(angle / snapAngle) * snapAngle;
             if (Math.abs(angle - leftAngleLocked) < snapThreshold) {
                 angle = leftAngleLocked;
             }

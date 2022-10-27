@@ -1,32 +1,4 @@
-export type TCorner = 'bl' | 'mb' | 'br' | 'ml' | 'mr' | 'tl' | 'mt' | 'tr' | 'mtr' | null;
-
-export interface ICoordinate {
-  x: number;
-  y: number;
-}
-
-export interface IoCoords {
-  bl: Point;
-  mb: Point;
-  br: Point;
-  ml: Point;
-  mr: Point;
-  tl: Point;
-  mt: Point;
-  tr: Point;
-  mtr: Point;
-}
-
-export interface ICorner {
-  bl: ICoordinate;
-  br: ICoordinate;
-  tl: ICoordinate;
-  tr: ICoordinate;
-}
-
 export class Point {
-  corner: ICorner;
-  touchCorner: ICorner;
   type: 'point';
   x: number;
   y: number;

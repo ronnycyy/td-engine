@@ -1,6 +1,7 @@
+import { Controls, IoCoords, TCorner } from './../control';
 import { Canvas } from "../canvas";
 import { TOriginX, TOriginY } from "../default";
-import { IoCoords, TCorner } from "../point";
+import { Point } from "../point";
 
 export class TD_Object {
   public left: number;
@@ -17,10 +18,12 @@ export class TD_Object {
   public cornerDashArray: Array<number>;
   public angle: number;
   public canvas: Canvas;
-  public oCoords: IoCoords;
+  public oCoords: IoCoords;  // 每个图形对象，都有 9 个控制点
   public touchCornerSize: number;
-  public corner: TCorner;  // 当前拖拽的控制点位置
+  public currentCorner: TCorner;  // 当前拖拽的控制点位置
   public hiddenFill: string;  // 隐藏层的颜色
+  public centerPoint: Point;  // 图形的中心点
+  public controls: Controls;  // 9 个控制点
 
   constructor() {
     this.cornerSize = 13;
@@ -33,7 +36,7 @@ export class TD_Object {
     this.originX = 'left';
     this.originY = 'top';
     this.touchCornerSize = 24;
-    this.corner = null;
+    this.currentCorner = null;
     this.hiddenFill = '';
   }
 
@@ -44,6 +47,8 @@ export class TD_Object {
   public render(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D, hiddenFill: string) { }
 
   public drawControls(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) { }
+
+  public updateControls() {}
 
   public getTotalAngle() {
     return this.angle;

@@ -1,6 +1,30 @@
-import { degreesToRadians, cos, sin } from "./default";
-import { TD_Object } from "./objects/object";
 import { Point } from "./point";
+import { TD_Object } from "./objects/object";
+
+export type TCorner = 'bl' | 'mb' | 'br' | 'ml' | 'mr' | 'tl' | 'mt' | 'tr' | null;
+
+export interface ICoordinate {
+  x: number;
+  y: number;
+}
+
+export interface IoCoords {
+  bl: Point;  // 底左
+  mb: Point;  // 底中
+  br: Point;  // 底右
+  ml: Point;  // 中左
+  mr: Point;  // 中右
+  tl: Point;  // 顶左
+  mt: Point;  // 顶中
+  tr: Point;  // 顶右
+}
+
+export interface ICorner {
+  bl: ICoordinate;
+  br: ICoordinate;
+  tl: ICoordinate;
+  tr: ICoordinate;
+}
 
 export class Controls {
   public ml: Control;
@@ -11,133 +35,71 @@ export class Controls {
   public tr: Control;
   public bl: Control;
   public br: Control;
-  public mtr: Control;
 
-  constructor() {
-    this.ml = new Control(-0.5, 0);
-    this.mr = new Control(0.5, 0);
-    this.mb = new Control(0, 0.5);
-    this.mt = new Control(0, -0.5);
-    this.tl = new Control(-0.5, -0.5);
-    this.tr = new Control(0.5, -0.5);
-    this.bl = new Control(-0.5, 0.5);
-    this.br = new Control(0.5, 0.5);
-    this.mtr = new Control(0, -0.5);
-  }
+  constructor() { }
 }
 
 export class Control {
-  public x: number;
-  public y: number;
-  public offsetX: number;
-  public offsetY: number;
-  public touchSizeX: number;
-  public touchSizeY: number;
-  public sizeX: number;
-  public sizeY: number;
+  public x: number;  // 中心点横坐标
+  public y: number;  // 中心点纵坐标
+  public corner: ICorner;  // 以点为中心，画一个 storeRect, 会得到 4 个边角点
+
+  private _size: number;  // 控制点的半径
 
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
-    this.offsetX = 0;
-    this.offsetY = 0;
-    this.sizeX = 0;
-    this.sizeY = 0;
+    this._size = 8;
+    this._calcCorner(x, y);
   }
 
-  public calcCornerCoords(objectAngle: number, objectCornerSize: number, centerX: number, centerY: number, isTouch: boolean) {
-    var cosHalfOffset: number;
-    var sinHalfOffset: number;
-    var cosHalfOffsetComp: number;
-    var sinHalfOffsetComp: number;
-    var xSize = (isTouch) ? this.touchSizeX : this.sizeX;
-    var ySize = (isTouch) ? this.touchSizeY : this.sizeY;
-
-    if (xSize && ySize && xSize !== ySize) {
-      var controlTriangleAngle = Math.atan2(ySize, xSize);
-      var cornerHypotenuse = Math.sqrt(xSize * xSize + ySize * ySize) / 2;
-      var newTheta = controlTriangleAngle - degreesToRadians(objectAngle);
-      var newThetaComp = Math.PI / 2 - controlTriangleAngle - degreesToRadians(objectAngle);
-      cosHalfOffset = cornerHypotenuse * cos(newTheta);
-      sinHalfOffset = cornerHypotenuse * sin(newTheta);
-      cosHalfOffsetComp = cornerHypotenuse * cos(newThetaComp);
-      sinHalfOffsetComp = cornerHypotenuse * sin(newThetaComp);
+  private _calcCorner(x: number, y: number) {
+    const size = this._size;
+    // x轴: 左->右变大
+    // y轴: 顶->底变大
+    const corner = {
+      tl: { x: x - size, y: y - size },
+      tr: { x: x + size, y: y - size },
+      bl: { x: x - size, y: y + size },
+      br: { x: x + size, y: y + size },
     }
-    else {
-      var cornerSize = (xSize && ySize) ? xSize : objectCornerSize;
-      cornerHypotenuse = cornerSize * 0.7071067812;
-      var newTheta = degreesToRadians(45 - objectAngle);
-      cosHalfOffset = cosHalfOffsetComp = cornerHypotenuse * cos(newTheta);
-      sinHalfOffset = sinHalfOffsetComp = cornerHypotenuse * sin(newTheta);
-    }
-    return {
-      tl: {
-        x: centerX - sinHalfOffsetComp,
-        y: centerY - cosHalfOffsetComp,
-      },
-      tr: {
-        x: centerX + cosHalfOffset,
-        y: centerY - sinHalfOffset,
-      },
-      bl: {
-        x: centerX - cosHalfOffset,
-        y: centerY + sinHalfOffset,
-      },
-      br: {
-        x: centerX + sinHalfOffsetComp,
-        y: centerY + cosHalfOffsetComp,
-      },
-    };
+    this.corner = corner;
   }
 
-  public render(ctx: CanvasRenderingContext2D, left: number, top: number, target: TD_Object) {
-    this._renderSquareControl(ctx, left, top, target);
+  public render(ctx: CanvasRenderingContext2D, target: TD_Object) {
+    this._renderSquareControl(ctx, target);
   }
 
-  public renderHidden(ctx: CanvasRenderingContext2D, left: number, top: number, target: TD_Object, hiddenFill: string) {
-    this._renderSquareControl(ctx, left, top, target, hiddenFill);
+  public renderHidden(ctx: CanvasRenderingContext2D, target: TD_Object, hiddenFill: string) {
+    this._renderSquareControl(ctx, target, hiddenFill);
   }
 
-  public positionHandler(dim: Point, finalMatrix: Array<number>, fabricObject?: TD_Object) {
-    const tp = (p: Point, t: Array<number>, ignoreOffset?: boolean) => new Point(p.x, p.y).transform(t, ignoreOffset);
-    const point = tp(new Point(this.x * dim.x + this.offsetX, this.y * dim.y + this.offsetY), finalMatrix);
-    return point;
-  }
-
-  private _renderSquareControl(ctx: CanvasRenderingContext2D, left: number, top: number, fabricObject: TD_Object, hiddenFill?: string) {
-    var xSize = fabricObject.cornerSize;
-    var ySize = fabricObject.cornerSize;
-    var transparentCorners = fabricObject.transparentCorners;
-    var methodName = transparentCorners ? 'stroke' : 'fill';
-    var stroke = !transparentCorners && fabricObject.cornerStrokeColor;
-    var xSizeBy2 = xSize / 2;
-    var ySizeBy2 = ySize / 2;
+  private _renderSquareControl(ctx: CanvasRenderingContext2D, target: TD_Object, hiddenFill?: string) {
 
     requestAnimationFrame(() => {
-
       if (hiddenFill) {
         ctx.save();
         ctx.fillStyle = hiddenFill;
         ctx.strokeStyle = hiddenFill;
         ctx.lineWidth = 1;
-        ctx.translate(left, top);
-        var angle = fabricObject.getTotalAngle();
-        ctx.rotate(degreesToRadians(angle));
-        ctx.fillRect(-xSizeBy2, -ySizeBy2, xSize, ySize);
+        const tl = this.corner.tl;
+        const tr = this.corner.tr;
+        const bl = this.corner.bl;
+        ctx.fillRect(tl.x, tl.y, tr.x - tl.x, bl.y - tl.y);
         ctx.restore();
       }
       else {
         ctx.save();
-        ctx.fillStyle = fabricObject.cornerColor;
-        ctx.strokeStyle = fabricObject.cornerStrokeColor || ctx.fillStyle;
+        ctx.fillStyle = target.cornerColor;
+        ctx.strokeStyle = target.cornerStrokeColor || ctx.fillStyle;
         ctx.lineWidth = 1;
-        ctx.translate(left, top);
-        var angle = fabricObject.getTotalAngle();
-        ctx.rotate(degreesToRadians(angle));
-        ctx.strokeRect(-xSizeBy2, -ySizeBy2, xSize, ySize);
+        const tl = this.corner.tl;
+        const tr = this.corner.tr;
+        const bl = this.corner.bl;
+        ctx.strokeRect(tl.x, tl.y, tr.x - tl.x, bl.y - tl.y);
         ctx.restore();
       }
-
     })
+
   }
 }

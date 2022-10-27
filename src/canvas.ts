@@ -1,8 +1,9 @@
 import { Transform } from './transform';
 import { addListener } from "./default";
 import { TD_Object } from "./objects/object";
-import { ICorner, Point, TCorner } from "./point";
+import { Point } from "./point";
 import Utils from "./utils";
+import { ICorner, TCorner } from './control';
 
 export interface ICanvasOptions {
   width: number;
@@ -49,13 +50,15 @@ export class Canvas {
   }
 
   public requestRenderAll() {
-    this._utils.requestAnimFrame(this.renderCanvas.bind(this, this.lowerContext));
+    this._utils.requestAnimFrame(this.renderCanvas.bind(this));
   }
 
-  public renderCanvas(ctx: CanvasRenderingContext2D) {
+  public renderCanvas() {
     // 清空画布
     this._clearContext(this.lowerContext);
     this._clearContext(this.upperContext);
+
+    const ctx = this.lowerContext;
     // 存储状态
     ctx.save();
     // 重新绘制所有图形
@@ -139,13 +142,14 @@ export class Canvas {
 
   private _onMouseDown(e: MouseEvent) {
     this._getTarget(e);
-    this._setTargetCorner(e);
+    this._setTargetCurrentCorner(e);
     this._setupCurrentTransform(e, this._target, false);
     this._handleEvent(e, 'down');
     this.requestRenderAll();
   }
 
   private _onMouseUp() {
+    this._resetTargetCorner();
     this._resetCurrentTransform();
   }
 
@@ -165,30 +169,36 @@ export class Canvas {
     this.requestRenderAll();
   }
 
-  private _setTargetCorner(e: MouseEvent) {
+  private _resetTargetCorner() {
+    if (!this._target) {
+      return;
+    }
+    this._target.currentCorner = null;
+  }
+
+  private _setTargetCurrentCorner(e: MouseEvent) {
     if (!this._target) {
       return;
     }
     // 检查鼠标的位置，是否在`选中图形`的某个边角控制点范围内
     const p = this._getPointer(e);
-    const oCoords = this._target.oCoords;
+    const controls = this._target.controls;
 
     // 寻找控制点
-    for (const key in oCoords) {
-      const c = oCoords[key].corner as ICorner;
+    for (const key in controls) {
+      const c = controls[key].corner as ICorner;
       const bl = c.bl;
       const br = c.br;
       const tl = c.tl;
-      const tr = c.tr;
       // canvas坐标系
       // x从左往右指，y从上往下指
       if (p.x >= bl.x && p.x <= br.x && p.y >= tl.y && p.y <= bl.y) {
-        this._target.corner = key as TCorner;
+        this._target.currentCorner = key as TCorner;
         return;
       }
     }
 
-    this._target.corner = null;
+    this._target.currentCorner = null;
   }
 
   private _resetCurrentTransform() {
@@ -199,17 +209,19 @@ export class Canvas {
     if (!transform || !pointer) {
       return;
     }
+    
     if (transform.action) {
       // 缩放
       this._utils.scaleHandler(e, transform, pointer, this._offsetLeft, this._offsetTop);
-    } else {
+    }
+    else {
       // 平移
       this._utils.translateHandler(e, transform, pointer);
     }
   }
 
   private _getPointer(e: MouseEvent) {
-    return new Point(e.clientX, e.clientY);
+    return new Point(e.clientX - this._offsetLeft, e.clientY - this._offsetTop);
   }
 
   private _setupCurrentTransform(e: MouseEvent, target: TD_Object, alreadySelected: boolean) {
