@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    // 移除注释
+    "removeComments": true,
     // 是否输出 .d.ts 文件
     "declaration": true,
     // 输出 .d.ts 文件到哪个目录

@@ -1,3 +1,5 @@
+import { EventPayload } from './../events/payload';
+import { EVENT_NAME } from './../events/eventName';
 import { Controls, IoCoords, TCorner } from './../control';
 import { Canvas } from "../canvas";
 import { TOriginX, TOriginY } from "../default";
@@ -44,11 +46,20 @@ export class TD_Object {
     this.hiddenFill = hiddenFill;
   }
 
+  // 渲染自己
   public render(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D, hiddenFill: string) { }
 
+  // 绘制控制点
   public drawControls(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) { }
 
-  public updateControls() {}
+  // 更新控制点坐标
+  public updateControls() { }
+
+  // 订阅事件
+  public on(eventName: EVENT_NAME, callback: Function) { }
+
+  // 发布事件
+  public emitEvent(eventName: EVENT_NAME, payload: EventPayload) {}
 
   public getTotalAngle() {
     return this.angle;

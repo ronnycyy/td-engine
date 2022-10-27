@@ -1,9 +1,12 @@
+import { EventSystem } from './events/event';
 import { Transform } from './transform';
 import { addListener } from "./default";
 import { TD_Object } from "./objects/object";
 import { Point } from "./point";
 import Utils from "./utils";
 import { ICorner, TCorner } from './control';
+import { EventPayload } from './events/payload';
+import { EVENT_NAME } from './events/eventName';
 
 export interface ICanvasOptions {
   width: number;
@@ -24,10 +27,10 @@ export class Canvas {
   private _graph: Map<string, TD_Object>;  // 随机颜色->图形对象
   private _utils: Utils;
   private _target: TD_Object;
-  private _eventListeners: { [key: string]: Array<Function> };
   private _offsetTop: number;   // canvas 离顶部的距离
   private _offsetLeft: number;  // canvas 离左边的距离
   private _currentTransform: Transform;
+  private _eventSystem: EventSystem;
 
   // private: 只能给本类定义访问，子类不能访问，本类实例也无法访问。
   // protected: 只能在本类和子类中访问，本类实例也不能访问
@@ -38,7 +41,7 @@ export class Canvas {
     this._utils = new Utils();
     this._graph = new Map();
     this._target = null;
-    this._eventListeners = {};
+    this._eventSystem = new EventSystem();
     this._initStatic(el, options);
     this._initInteractive();
     this.viewportTransform = [1, 0, 0, 1, 0, 0];
@@ -78,11 +81,19 @@ export class Canvas {
     ctx.clearRect(0, 0, this.width, this.height);
   }
 
-  public on(eventName: string, handler: Function) {
-    if (!this._eventListeners[eventName]) {
-      this._eventListeners[eventName] = [];
+  public on(eventName: EVENT_NAME, handler: Function) {
+    return this._eventSystem.on(eventName, handler);
+  }
+
+  private _emitEvent(e: MouseEvent, eventName: EVENT_NAME) {
+    const payload = new EventPayload(e, this._target);
+    this._eventSystem.emit(eventName, payload);
+    
+    if (this._target) {
+      if (eventName === EVENT_NAME.MOUSE_UP) {
+        this._target.emitEvent(EVENT_NAME.OBJECT_SELECTED, payload);
+      }
     }
-    this._eventListeners[eventName].push(handler);
   }
 
   private _initRetinaScaling() {
@@ -144,13 +155,14 @@ export class Canvas {
     this._getTarget(e);
     this._setTargetCurrentCorner(e);
     this._setupCurrentTransform(e, this._target, false);
-    this._handleEvent(e, 'down');
+    this._emitEvent(e, EVENT_NAME.MOUSE_DOWN);
     this.requestRenderAll();
   }
 
-  private _onMouseUp() {
+  private _onMouseUp(e: MouseEvent) {
     this._resetTargetCorner();
     this._resetCurrentTransform();
+    this._emitEvent(e, EVENT_NAME.MOUSE_UP);
   }
 
   private _onMouseMove(e: MouseEvent) {
@@ -158,6 +170,7 @@ export class Canvas {
       return;
     }
     this._transformObject(e);
+    this._emitEvent(e, EVENT_NAME.MOUSE_MOVE);
   }
 
   private _transformObject(e: MouseEvent) {
@@ -209,7 +222,7 @@ export class Canvas {
     if (!transform || !pointer) {
       return;
     }
-    
+
     if (transform.action) {
       // 缩放
       this._utils.scaleHandler(e, transform, pointer, this._offsetLeft, this._offsetTop);
@@ -251,24 +264,6 @@ export class Canvas {
       this._target = target;
     } else {
       this._target = null;
-    }
-  }
-
-  private _handleEvent(e: MouseEvent, eventType: string) {
-    const payload = { e: e, target: this._target };
-    this._fire('mouse:' + eventType, payload);
-  }
-
-  private _fire(eventName: string, payload: Object) {
-    const listeners = this._eventListeners[eventName];
-    if (!listeners) {
-      return;
-    }
-    for (let i = 0, len = listeners.length; i < len; i++) {
-      const cb = listeners[i];
-      if (cb) {
-        cb.call(this, payload);
-      }
     }
   }
 

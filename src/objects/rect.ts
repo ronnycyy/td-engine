@@ -1,7 +1,10 @@
-import { Controls, Control } from "../control";
-import { iMatrix } from "../default";
-import { IObjectOptions, TD_Object } from "./object";
 import { Point } from "../point";
+import { iMatrix } from "../default";
+import { Controls, Control } from "../control";
+import { EVENT_NAME } from "../events/eventName";
+import { EventSystem } from './../events/event';
+import { EventPayload } from './../events/payload';
+import { IObjectOptions, TD_Object } from "./object";
 
 export interface IRectOptions extends IObjectOptions {
 }
@@ -12,6 +15,8 @@ export class Rect extends TD_Object {
   public fill: string;
   public fillRule: 'nonzero' | 'evenodd';
   public controls: Controls;
+
+  private _eventSystem: EventSystem;
 
   constructor(options: IRectOptions) {
     super();
@@ -25,6 +30,7 @@ export class Rect extends TD_Object {
     this.top = options.top || 0;
     this._setCenterPoint();
     this._setControls();
+    this._eventSystem = new EventSystem();
   }
 
   public render(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) {
@@ -35,6 +41,14 @@ export class Rect extends TD_Object {
   public drawControls(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) {
     this._drawControlsVisible(ctx);
     this._drawControlsHidden(hiddenCtx);
+  }
+
+  public on(eventName: EVENT_NAME, callback: Function) {
+    return this._eventSystem.on(eventName, callback);
+  }
+
+  public emitEvent(eventName: EVENT_NAME, payload: EventPayload) {
+    this._eventSystem.emit(eventName, payload);
   }
 
   private _setCenterPoint() {

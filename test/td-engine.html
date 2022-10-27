@@ -16,7 +16,19 @@
 <body>
   <!-- <h1>tdEngine</h1> -->
   <canvas id="main" width="500" height="500"></canvas>
+
+  <div>
+    <button id="mouse_down">mouse:down off</button>
+    <button id="mouse_up">mouse:up off</button>
+    <button id="mouse_move">mouse:move off</button>
+  </div>
+
+  <div>
+    <button id="object_selected">object:selected off</button>
+  </div>
+
   <script src="../dist/tdEngine.js"></script>
+
   <script>
     var canvas = new tdEngine.Canvas('main');
     var rect = new tdEngine.Rect({
@@ -27,10 +39,26 @@
       fill: '#ff5722'
     })
     canvas.add(rect);
-    // canvas.on('mouse:down', (payload) => {
-    //   console.log(payload);
-    // })
+
+    // canvas 事件
+    var downListener = canvas.on('mouse:down', (payload) => console.log('mouse:down', payload));
+    var upListener = canvas.on('mouse:up', (payload) => console.log('mouse:up', payload));
+    var moveListener = canvas.on('mouse:move', (payload) => console.log('mouse:move', payload));
+    // 事件退订
+    var mouseDown = document.getElementById('mouse_down');
+    var mouseUp = document.getElementById('mouse_up');
+    var mouseMove = document.getElementById('mouse_move');
+    mouseDown.addEventListener('click', function () { downListener.off(); }, false);
+    mouseUp.addEventListener('click', function () { upListener.off(); }, false);
+    mouseMove.addEventListener('click', function () { moveListener.off(); }, false);
+
+    // rect 事件
+    var rectListener = rect.on('object:selected', (payload) => console.log('object:selected', payload));
+    // 事件退订
+    var rectSelected = document.getElementById('object_selected');
+    rectSelected.addEventListener('click', function () { rectListener.off(); }, false);
   </script>
+
 </body>
 
 </html>
