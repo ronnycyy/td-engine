@@ -1,24 +1,23 @@
-import { Transform } from './transform';
-import { iMatrix, degreesToRadians, cos, sin } from './default';
+import { EVENT_NAME } from './events/eventName';
+import { EventPayload } from './events/payload';
 import { Point } from './point';
+import { Transform } from './transform';
 
 class Utils {
-  constructor() { }
 
-  // 旋转
-  // event 后面可以交给事件系统, 如 target.fire("rotate", xxx)
-  public rotateHandler(e: Event, transform: Transform, point: Point) {
-  }
+  constructor() { }
 
   // 缩放
   // offsetLeft: canvas 到 html 左边界的距离
-  public scaleHandler(e: Event, transform: Transform, point: Point, offsetLeft: number, offsetTop: number) {
+  // point: 点击位置在 canvas 画布中的坐标 (已经去除外部偏移)
+  public scaleHandler(e: Event, transform: Transform, point: Point) {
     const target = transform.target;
-    const px = point.x - offsetLeft;  // 点到 canvas 左边界的距离
-    const py = point.y - offsetTop;   // 点到 canvas 顶边界的距离
-
+    const px = point.x;
+    const py = point.y;
     const oldLeft = target.left;
     const oldTop = target.top;
+    const oldWidth = target.width;
+    const oldHeight = target.height;
 
     switch (transform.action) {
       case 'bl': {
@@ -78,50 +77,33 @@ class Utils {
         break;
       }
     }
+
     target.updateControls();
+
+    if (target.left !== oldLeft || target.top !== oldTop || target.height !== oldHeight || target.width !== oldWidth) {
+      target.emitEvent(EVENT_NAME.OBJECT_SCALING, new EventPayload(e, target));
+    }
   }
 
   // 平移
-  public translateHandler(e: Event, transform: Transform, point: Point): boolean {
+  public translateHandler(e: Event, transform: Transform, point: Point) {
     const target = transform.target;
+    const oldLeft = target.left;
+    const oldTop = target.top;
     const newLeft = point.x - (transform.offsetX || 0);
     const newTop = point.y - (transform.offsetY || 0);
-    const isExactlyMoveX = !target.get('lockMovementX') && target.left !== newLeft;
-    const isExactlyMoveY = !target.get('lockMovementY') && target.top !== newTop;
-
-    isExactlyMoveX && target.set('left', newLeft);
-    isExactlyMoveY && target.set('top', newTop);
-
+    
+    target.left = newLeft;
+    target.top = newTop;
     target.updateControls();
 
-    if (isExactlyMoveX || isExactlyMoveY) {
-      // 这里可以加 target 上的 move 事件发布
+    if (target.left !== oldLeft || target.top !== oldTop) {
+      target.emitEvent(EVENT_NAME.OBJECT_MOVING, new EventPayload(e, target));
     }
-
-    return isExactlyMoveX || isExactlyMoveY;   // 图形是否移动了
   }
 
   public requestAnimFrame(cb: Function) {
     window.requestAnimationFrame(() => cb.call(null));
-  }
-
-  public multiplyMatrices(a: Array<number>, b: Array<number>, is2x2?: boolean) {
-    return [
-      a[0] * b[0] + a[2] * b[1],
-      a[1] * b[0] + a[3] * b[1],
-      a[0] * b[2] + a[2] * b[3],
-      a[1] * b[2] + a[3] * b[3],
-      is2x2 ? 0 : a[0] * b[4] + a[2] * b[5] + a[4],
-      is2x2 ? 0 : a[1] * b[4] + a[3] * b[5] + a[5]
-    ];
-  }
-
-  public calcRotateMatrix({ angle }) {
-    if (!angle) {
-      return iMatrix;
-    }
-    const theta = degreesToRadians(angle), cosin = cos(theta), sinus = sin(theta);
-    return [cosin, sinus, -sinus, cosin, 0, 0];
   }
 
   public wrapElement(son: HTMLElement, parent: HTMLDivElement) {

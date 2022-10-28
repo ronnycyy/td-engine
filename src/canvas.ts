@@ -47,8 +47,12 @@ export class Canvas {
     this.viewportTransform = [1, 0, 0, 1, 0, 0];
   }
 
-  public add(object: TD_Object) {
-    this.saveObjectInMap(object);
+  public add(target: TD_Object) {
+    if (!target) {
+      return;
+    }
+    this._saveTargetInMap(target);
+    this._setTargetCanvas(target);
     this.requestRenderAll();
   }
 
@@ -67,7 +71,6 @@ export class Canvas {
     // 重新绘制所有图形
     this._graph.forEach((object, randomColor) => {
       object.render(this.lowerContext, this.upperContext, randomColor);
-      object.setCanvas(this);
     });
     // 如果有选中的图形，绘制选中状态
     if (this._target) {
@@ -88,7 +91,7 @@ export class Canvas {
   private _emitEvent(e: MouseEvent, eventName: EVENT_NAME) {
     const payload = new EventPayload(e, this._target);
     this._eventSystem.emit(eventName, payload);
-    
+
     if (this._target) {
       if (eventName === EVENT_NAME.MOUSE_UP) {
         this._target.emitEvent(EVENT_NAME.OBJECT_SELECTED, payload);
@@ -124,13 +127,17 @@ export class Canvas {
     this._offsetTop = offsetTop;
   }
 
-  private saveObjectInMap(object: TD_Object) {
+  private _setTargetCanvas(target: TD_Object) {
+    target.setCanvas(this);
+  }
+
+  private _saveTargetInMap(target: TD_Object) {
     let randomColor = this._utils.getRandomHexColor();
     while (this._graph.has(randomColor)) {
       randomColor = this._utils.getRandomHexColor();
     }
-    this._graph.set(randomColor, object);
-    object.setHiddenFill(randomColor);
+    this._graph.set(randomColor, target);
+    target.setHiddenFill(randomColor);
   }
 
   private _initStatic(el: string, options?: ICanvasOptions) {
@@ -154,7 +161,7 @@ export class Canvas {
   private _onMouseDown(e: MouseEvent) {
     this._getTarget(e);
     this._setTargetCurrentCorner(e);
-    this._setupCurrentTransform(e, this._target, false);
+    this._setupCurrentTransform(e, this._target);
     this._emitEvent(e, EVENT_NAME.MOUSE_DOWN);
     this.requestRenderAll();
   }
@@ -174,7 +181,7 @@ export class Canvas {
   }
 
   private _transformObject(e: MouseEvent) {
-    // 获取点击位置
+    // 获取 `相对于 canvas 画布` 的点击位置
     const pointer = this._getPointer(e);
     // 设置 target 对象的平移/缩放 
     this._performTransformAction(e, this._currentTransform, pointer);
@@ -225,7 +232,7 @@ export class Canvas {
 
     if (transform.action) {
       // 缩放
-      this._utils.scaleHandler(e, transform, pointer, this._offsetLeft, this._offsetTop);
+      this._utils.scaleHandler(e, transform, pointer);
     }
     else {
       // 平移
@@ -237,7 +244,7 @@ export class Canvas {
     return new Point(e.clientX - this._offsetLeft, e.clientY - this._offsetTop);
   }
 
-  private _setupCurrentTransform(e: MouseEvent, target: TD_Object, alreadySelected: boolean) {
+  private _setupCurrentTransform(e: MouseEvent, target: TD_Object) {
     if (!target) {
       return;
     }

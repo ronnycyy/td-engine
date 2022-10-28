@@ -14,32 +14,38 @@
 </head>
 
 <body>
-  <!-- <h1>Fabric.js</h1> -->
+  <h1>Fabric.js</h1>
+  <button id="rect">rect</button>
+  <button id="circle">circle</button>
+
   <canvas id="main" width="500" height="500"></canvas>
 
+
   <script src="./fabric.js"></script>
+
   <script>
     var canvas = new fabric.Canvas('main');
-    var rect = new fabric.Rect({
-      left: 100,
-      top: 100,
-      width: 200,
-      height: 200,
-      fill: 'pink'
-    })
-    canvas.add(rect);
-    // canvas.on('mouse:down', (event) => {
-    //   console.log(event);
-    // })
-    // canvas.on('object:moving', function (event) {
-    //   console.log('moving an object', event);
-    // });
-    // canvas.on('object:scaling', function (event) {
-    //   console.log('scaling:', event);
-    // });
-    canvas.on('object:rotating', function (e) {
-      console.log('object:rotating', e);
-    })
+
+    var rectButton = document.querySelector('#rect');
+    rectButton.addEventListener('click', function () {
+      canvas.add(new fabric.Rect({
+        left: 100,
+        top: 100,
+        width: 200,
+        height: 200,
+        fill: 'pink'
+      }));
+    }, false)
+
+    var circleButton = document.querySelector('#circle');
+    circleButton.addEventListener('click', function () {
+      canvas.add(new fabric.Circle({
+        left: 100,
+        top: 100,
+        radius: 50,
+        fill: 'green'
+      }));
+    }, false)
   </script>
 </body>
 

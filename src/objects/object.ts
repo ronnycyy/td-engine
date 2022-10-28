@@ -1,18 +1,35 @@
+import { Point } from "../point";
+import { Canvas } from "../canvas";
+import { EventSystem } from '../events/event';
+import { TOriginX, TOriginY } from "../default";
 import { EventPayload } from './../events/payload';
 import { EVENT_NAME } from './../events/eventName';
-import { Controls, IoCoords, TCorner } from './../control';
-import { Canvas } from "../canvas";
-import { TOriginX, TOriginY } from "../default";
-import { Point } from "../point";
+import { Control, Controls, TCorner } from './../control';
+
+export interface IObjectOptions {
+  left: number;
+  top: number;
+  type: string;
+  width: number;
+  height: number;
+  fill: string;
+  fillRule: 'nonzero' | 'evenodd';
+  strokeColor: string;  // 描边颜色
+  lineWidth: number;  // 描边线粗细
+}
 
 export class TD_Object {
+  public type: string;
+
   public left: number;
   public top: number;
   public originX: TOriginX;
   public originY: TOriginY;
   public width: number;
   public height: number;
-  public type: string;
+  public fill: string;
+  public fillRule: 'nonzero' | 'evenodd';
+
   public cornerSize: number;
   public transparentCorners: boolean;
   public cornerStrokeColor: string;
@@ -20,12 +37,15 @@ export class TD_Object {
   public cornerDashArray: Array<number>;
   public angle: number;
   public canvas: Canvas;
-  public oCoords: IoCoords;  // 每个图形对象，都有 9 个控制点
   public touchCornerSize: number;
   public currentCorner: TCorner;  // 当前拖拽的控制点位置
   public hiddenFill: string;  // 隐藏层的颜色
   public centerPoint: Point;  // 图形的中心点
   public controls: Controls;  // 9 个控制点
+  public strokeColor: string;  // 描边颜色
+  public lineWidth: number;  // 描边线粗细
+
+  private _eventSystem: EventSystem;
 
   constructor() {
     this.cornerSize = 13;
@@ -40,10 +60,7 @@ export class TD_Object {
     this.touchCornerSize = 24;
     this.currentCorner = null;
     this.hiddenFill = '';
-  }
-
-  public setHiddenFill(hiddenFill: string) {
-    this.hiddenFill = hiddenFill;
+    this._eventSystem = new EventSystem();
   }
 
   // 渲染自己
@@ -53,13 +70,38 @@ export class TD_Object {
   public drawControls(ctx: CanvasRenderingContext2D, hiddenCtx: CanvasRenderingContext2D) { }
 
   // 更新控制点坐标
-  public updateControls() { }
+  public updateControls() {
+    this.controls = this._generateControls();
+  }
+
+  // 获取属性
+  public get(key: string) {
+    return this[key];
+  }
+
+  // 设置属性 -> 重新绘制
+  public set(key: string, value: any) {
+    if (!this.canvas) {
+      return;
+    }
+    this[key] = value;
+    this.updateControls();
+    this.canvas.requestRenderAll();
+  }
 
   // 订阅事件
-  public on(eventName: EVENT_NAME, callback: Function) { }
+  public on(eventName: EVENT_NAME, callback: Function) {
+    return this._eventSystem.on(eventName, callback);
+  }
 
   // 发布事件
-  public emitEvent(eventName: EVENT_NAME, payload: EventPayload) {}
+  public emitEvent(eventName: EVENT_NAME, payload: EventPayload) {
+    this._eventSystem.emit(eventName, payload);
+  }
+
+  public setHiddenFill(hiddenFill: string) {
+    this.hiddenFill = hiddenFill;
+  }
 
   public getTotalAngle() {
     return this.angle;
@@ -69,25 +111,42 @@ export class TD_Object {
     this.canvas = canvas;
   }
 
-  public set(key: string, value: any) {
-    this[key] = value;
+  protected _setControls() {
+    this.controls = this._generateControls();
+    return this;
   }
 
-  public get(key: string) {
-    return this[key];
+  private _generateControls(): Controls {
+    const l = this.left || 0;
+    const t = this.top || 0;
+    const w = this.width || 0;
+    const h = this.height || 0;
+
+    return {
+      tl: new Control(l, t),
+      mt: new Control(l + w / 2, t),
+      tr: new Control(l + w, t),
+      ml: new Control(l, t + h / 2),
+      mr: new Control(l + w, t + h / 2),
+      bl: new Control(l, t + h),
+      mb: new Control(l + w / 2, t + h),
+      br: new Control(l + w, t + h)
+    };
   }
 
-  public fire(eventName: string, options: any) {
-    // object 上的事件注册与发布
+  protected _renderFill(ctx: CanvasRenderingContext2D, fill: string) {
+    if (!fill) {
+      return;
+    }
+    ctx.save();
+    ctx.fillStyle = fill;
+    ctx.fill(this.fillRule === 'evenodd' ? 'evenodd' : 'nonzero');
+    ctx.restore();
   }
-}
 
-export interface IObjectOptions {
-  left: number;
-  top: number;
-  type: string;
-  width: number;
-  height: number;
-  fill: string;
-  fillRule: 'nonzero' | 'evenodd';
+  protected _setCenterPoint() {
+    const cx = this.left + this.width / 2;
+    const cy = this.top + this.height / 2;
+    this.centerPoint = new Point(cx, cy);
+  }
 }
