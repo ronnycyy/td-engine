@@ -92,10 +92,13 @@ class Utils {
     const oldTop = target.top;
     const newLeft = point.x - (transform.offsetX || 0);
     const newTop = point.y - (transform.offsetY || 0);
-    
+
     target.left = newLeft;
     target.top = newTop;
-    target.updateControls();
+
+    if (target.scalable) {
+      target.updateControls();
+    }
 
     if (target.left !== oldLeft || target.top !== oldTop) {
       target.emitEvent(EVENT_NAME.OBJECT_MOVING, new EventPayload(e, target));

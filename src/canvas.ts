@@ -52,7 +52,7 @@ export class Canvas {
       return;
     }
     this._saveTargetInMap(target);
-    this._setTargetCanvas(target);
+    this._setCanvasInTarget(target);
     this.requestRenderAll();
   }
 
@@ -73,7 +73,7 @@ export class Canvas {
       object.render(this.lowerContext, this.upperContext, randomColor);
     });
     // 如果有选中的图形，绘制选中状态
-    if (this._target) {
+    if (this._target && this._target.scalable) {
       this._drawTargetControls();
     }
     // 恢复状态
@@ -127,7 +127,7 @@ export class Canvas {
     this._offsetTop = offsetTop;
   }
 
-  private _setTargetCanvas(target: TD_Object) {
+  private _setCanvasInTarget(target: TD_Object) {
     target.setCanvas(this);
   }
 
@@ -197,7 +197,7 @@ export class Canvas {
   }
 
   private _setTargetCurrentCorner(e: MouseEvent) {
-    if (!this._target) {
+    if (!this._target || !this._target.scalable) {
       return;
     }
     // 检查鼠标的位置，是否在`选中图形`的某个边角控制点范围内
@@ -231,8 +231,10 @@ export class Canvas {
     }
 
     if (transform.action) {
-      // 缩放
-      this._utils.scaleHandler(e, transform, pointer);
+      if (this._target.scalable) {
+        // 缩放
+        this._utils.scaleHandler(e, transform, pointer);
+      }
     }
     else {
       // 平移

@@ -9,6 +9,13 @@
     body {
       margin: 0;
       padding: 0;
+      padding: 10px;
+    }
+
+    canvas {
+      margin-top: 10px;
+      margin-left: 10px;
+      border: 1px solid green;
     }
   </style>
 </head>
@@ -17,35 +24,71 @@
   <h1>Fabric.js</h1>
   <button id="rect">rect</button>
   <button id="circle">circle</button>
+  <button id="triangle">triangle</button>
+  <button id="path">path</button>
+  <button id="text">text</button>
 
   <canvas id="main" width="500" height="500"></canvas>
-
 
   <script src="./fabric.js"></script>
 
   <script>
+
     var canvas = new fabric.Canvas('main');
 
-    var rectButton = document.querySelector('#rect');
-    rectButton.addEventListener('click', function () {
-      canvas.add(new fabric.Rect({
-        left: 100,
-        top: 100,
-        width: 200,
-        height: 200,
-        fill: 'pink'
-      }));
-    }, false)
+    proc('rect');
+    proc('circle');
+    proc('triangle');
+    proc('path');
+    proc('text');
 
-    var circleButton = document.querySelector('#circle');
-    circleButton.addEventListener('click', function () {
-      canvas.add(new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 50,
-        fill: 'green'
-      }));
-    }, false)
+    function proc(id) {
+      var button = document.querySelector(`#${id}`);
+      button.addEventListener('click', function () {
+
+        if (id === 'rect') {
+          canvas.add(new fabric.Rect({
+            left: 100,
+            top: 100,
+            width: 200,
+            height: 200,
+            fill: 'pink'
+          }));
+        }
+
+        else if (id === 'circle') {
+          canvas.add(new fabric.Circle({
+            left: 100,
+            top: 100,
+            radius: 100,
+            fill: 'blue'
+          }));
+        }
+
+        else if (id === 'triangle') {
+          canvas.add(new fabric.Triangle({
+            left: 100,
+            top: 100,
+            width: 200,
+            height: 200,
+            fill: 'green'
+          }));
+        }
+
+        else if (id === 'path') {
+          const path = new fabric.Path('M 0 0 L 200 100 L 170 200 z');
+          canvas.add(path);
+        }
+
+        else if (id === 'text') {
+          const text = new fabric.Text('hello world', { left: 100, top: 100 });
+          canvas.add(text);
+        }
+
+
+      }, false);
+    }
+
   </script>
 </body>
 

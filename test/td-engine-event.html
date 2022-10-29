@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taiden Engine</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      padding: 10px;
+    }
+
+    canvas {
+      margin-top: 10px;
+      margin-left: 10px;
+      border: 1px solid pink;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Taiden Engine Event</h1>
+  <div>
+    <button id="mouse_down">mouse:down off</button>
+    <button id="mouse_up">mouse:up off</button>
+    <button id="mouse_move">mouse:move off</button>
+  </div>
+
+  <canvas id="main" width="500" height="500"></canvas>
+  <script src="../dist/tdEngine.js"></script>
+  <script>
+    var canvas = new tdEngine.Canvas('main');
+    var rect = new tdEngine.Rect({
+      left: 0,
+      top: 0,
+      width: 200,
+      height: 200,
+      fill: '#ff5722'
+    });
+    canvas.add(rect);
+    // canvas 事件
+    var downListener = canvas.on('mouse:down', (payload) => console.log('mouse:down', payload));
+    var upListener = canvas.on('mouse:up', (payload) => console.log('mouse:up', payload));
+    var moveListener = canvas.on('mouse:move', (payload) => console.log('mouse:move', payload));
+    // 事件退订
+    var mouseDown = document.getElementById('mouse_down');
+    var mouseUp = document.getElementById('mouse_up');
+    var mouseMove = document.getElementById('mouse_move');
+    mouseDown.addEventListener('click', function () { downListener.off(); }, false);
+    mouseUp.addEventListener('click', function () { upListener.off(); }, false);
+    mouseMove.addEventListener('click', function () { moveListener.off(); }, false);
+  </script>
+
+</body>
+
+</html>

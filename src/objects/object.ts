@@ -45,6 +45,8 @@ export class TD_Object {
   public strokeColor: string;  // 描边颜色
   public lineWidth: number;  // 描边线粗细
 
+  public scalable: boolean;  // 是否可放缩
+
   private _eventSystem: EventSystem;
 
   constructor() {
@@ -60,6 +62,7 @@ export class TD_Object {
     this.touchCornerSize = 24;
     this.currentCorner = null;
     this.hiddenFill = '';
+    this.scalable = true;
     this._eventSystem = new EventSystem();
   }
 

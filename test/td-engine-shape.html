@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taiden Engine Shape</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      padding: 10px;
+    }
+
+    canvas {
+      margin-top: 10px;
+      margin-left: 10px;
+      border: 1px solid pink;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Taiden Engine Shape</h1>
+
+  <button id="rect">rect</button>
+  <button id="circle">circle</button>
+  <button id="triangle">triangle</button>
+  <button id="path">path</button>
+
+  <canvas id="main" width="500" height="500"></canvas>
+  <script src="../dist/tdEngine.js"></script>
+
+  <script>
+    var canvas = new tdEngine.Canvas('main');
+
+    proc('rect');
+    proc('circle');
+    proc('triangle');
+    proc('path');
+
+    function proc(id) {
+      document
+        .querySelector(`#${id}`)
+        .addEventListener('click', function () {
+
+          switch (id) {
+            case 'rect': {
+              canvas.add(new tdEngine.Rect({
+                left: 100,
+                top: 100,
+                width: 200,
+                height: 200,
+                fill: 'pink'
+              }));
+              break;
+            }
+            case 'circle': {
+              canvas.add(new tdEngine.Circle({
+                left: 100,
+                top: 100,
+                radius: 100,
+                fill: 'blue'
+              }));
+              break;
+            }
+            case 'triangle': {
+              canvas.add(new tdEngine.Triangle({
+                left: 50,
+                top: 50,
+                width: 100,
+                height: 150,
+                fill: 'red',
+              }));
+              break;
+            }
+            case 'path': {
+              canvas.add(new tdEngine.Path({
+                svg: 'M 0 0 L 200 100 Q 300 100 200 200 C 150 150 120 110 200 230 L 170 200 Z',
+                left: 100,
+                top: 100
+              }));
+              break;
+            }
+          }
+
+        }, false);
+    }
+  </script>
+
+</body>
+
+</html>
